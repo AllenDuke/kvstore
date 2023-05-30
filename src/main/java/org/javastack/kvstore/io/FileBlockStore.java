@@ -342,6 +342,7 @@ public class FileBlockStore {
 				}
 				// Fallback to RAF
 			}
+			// 整块写入
 			fileChannel.position(index * blockSize).write(buf);
 			return true;
 		} catch (Exception e) {

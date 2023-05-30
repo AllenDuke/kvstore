@@ -90,6 +90,7 @@ public final class LeafNode<K extends DataHolder<K>, V extends DataHolder<V>> ex
 	public boolean add(final int slot, final K newKey, final V newValue) {
 		// if (log.isDebugEnabled()) log.debug("add("+newKey+") i=" + slot);
 		if (slot < allocated) {
+			// slot位于中间位置，将右侧向右移动一个单位，用于插入当前k-v
 			moveElementsRight(keys, slot);
 			moveElementsRight(values, slot);
 		}
@@ -122,6 +123,9 @@ public final class LeafNode<K extends DataHolder<K>, V extends DataHolder<V>> ex
 
 	@Override
 	public LeafNode<K, V> split() {
+		// 分裂当前叶子节点
+
+		// 将当前节点高位数据拷贝到新节点
 		final LeafNode<K, V> newHigh = tree.createLeafNode();
 		newHigh.allocId();
 		// int j = ((allocated >> 1) | (allocated & 1)); // dividir por dos y sumar el resto (0 o 1)
@@ -137,6 +141,8 @@ public final class LeafNode<K extends DataHolder<K>, V extends DataHolder<V>> ex
 		}
 		newHigh.allocated = newsize;
 		allocated -= newsize;
+
+		// 更新叶子层链表
 		// Update Linked List (left) in old High
 		if (rightid != NULL_ID) {
 			final LeafNode<K, V> oldHigh = (LeafNode<K, V>) tree.getNode(rightid);
@@ -148,6 +154,8 @@ public final class LeafNode<K extends DataHolder<K>, V extends DataHolder<V>> ex
 		// Linked List (right)
 		newHigh.rightid = rightid;
 		rightid = newHigh.id;
+
+
 		// update lowIdx on tree
 		if (leftid == 0) {
 			tree.lowIdx = id;
@@ -156,7 +164,9 @@ public final class LeafNode<K extends DataHolder<K>, V extends DataHolder<V>> ex
 		if (newHigh.rightid == 0) {
 			tree.highIdx = newHigh.id;
 		}
-		//
+
+
+		// 更新更改的节点
 		tree.putNode(this);
 		tree.putNode(newHigh);
 		return newHigh;
@@ -303,8 +313,10 @@ public final class LeafNode<K extends DataHolder<K>, V extends DataHolder<V>> ex
 	public void serialize(final ByteBuffer buf) {
 		super.serialize(buf);
 		for (int i = 0; i < allocated; i++) {
+			// 按序写入每个val
 			values[i].serialize(buf);
 		}
+		// 写入左右叶子节点块索引
 		buf.putInt(leftid);		// 4 bytes
 		buf.putInt(rightid);	// 4 bytes
 		buf.flip();

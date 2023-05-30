@@ -288,6 +288,7 @@ public final class BplusTreeFile<K extends DataHolder<K>, V extends DataHolder<V
 		}
 
 		if (disableAllCaches) {
+			// 将该节点写入文件
 			putNodeToStore(node);
 			return;
 		}
@@ -496,7 +497,10 @@ public final class BplusTreeFile<K extends DataHolder<K>, V extends DataHolder<V
 		height = buf.getInt();
 		maxInternalNodes = buf.getInt();
 		maxLeafNodes = buf.getInt();
+
+		// 这里只检查0号块，实际应该针对整个文件，因为0号块可能没有发生更新
 		isClean = ((buf.get() == ((byte) 0xEA)) ? true : false);
+
 		magic2 = buf.getInt();
 		if (magic2 != MAGIC_2) {
 			throw new InvalidDataException("Invalid metadata (MAGIC2)");
@@ -511,6 +515,7 @@ public final class BplusTreeFile<K extends DataHolder<K>, V extends DataHolder<V
 		clearWriteCaches();
 		if (isClean && fileFreeBlocks.exists()) {
 			try {
+				// 记录空闲块位图
 				final SimpleBitSet newFreeBlocks = SimpleBitSet.deserializeFromFile(fileFreeBlocks);
 				freeBlocks = newFreeBlocks;
 			} catch (IOException e) {
@@ -552,6 +557,8 @@ public final class BplusTreeFile<K extends DataHolder<K>, V extends DataHolder<V
 		// Try to read Redo Meta Sync State to choose recovery mode
 		boolean recoveryIncremental = false;
 		if (!forceFullRecovery) {
+			// 并不是全量恢复
+
 			buf.clear();
 			if (redoStore.isEmpty()) {
 				recoveryIncremental = true;
@@ -936,6 +943,7 @@ public final class BplusTreeFile<K extends DataHolder<K>, V extends DataHolder<V
 				log.error("InterruptedException in submitRedoPut(key, value)", e);
 			}
 		} else {
+			// 顺序写入redoLog
 			redoStore.write(buf);
 			bufstack.push(buf);
 		}

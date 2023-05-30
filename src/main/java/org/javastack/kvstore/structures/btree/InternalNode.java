@@ -147,6 +147,8 @@ public final class InternalNode<K extends DataHolder<K>, V extends DataHolder<V>
 
 	@Override
 	public K splitShiftKeysLeft() {
+		// 非叶子节点，将最左侧k向上传递
+
 		final K removed = keys[0];
 		moveElementsLeft(keys, 0);
 		allocated--;
@@ -335,6 +337,7 @@ public final class InternalNode<K extends DataHolder<K>, V extends DataHolder<V>
 	public void serialize(final ByteBuffer buf) {
 		super.serialize(buf);
 		for (int i = 0; i < allocated + 1; i++) {
+			// 按序写入每个下层子节点块索引
 			buf.putInt(childs[i]);				// 4 bytes
 		}
 		buf.flip();

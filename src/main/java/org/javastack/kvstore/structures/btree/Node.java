@@ -168,9 +168,16 @@ public abstract class Node<K extends DataHolder<K>, V extends DataHolder<V>> {
 
 	public void serialize(final ByteBuffer buf) {
 		buf.clear();
+
+		// 前4字节保存当前块索引
 		buf.putInt(id);								// 4 bytes
+
+		// 接下来2字节保存slot长度
 		buf.putShort((short) (allocated & 0x7FFF));	// 2 bytes
+
+
 		for (int i = 0; i < allocated; i++) {		// X bytes * b_order
+			// 按序写入每个k
 			keys[i].serialize(buf);
 		}
 	}

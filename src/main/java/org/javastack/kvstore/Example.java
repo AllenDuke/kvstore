@@ -27,7 +27,11 @@ import org.javastack.kvstore.structures.btree.BplusTree.TreeEntry;
  * @author Guillermo Grandes / guillermo.grandes[at]gmail.com
  */
 public class Example {
-	private static final String btreeFile = "/tmp/test";
+
+	/**
+	 * b+树持久化的文件路径
+	 */
+	private static final String btreeFile = "/tmp/bpt_test";
 
 	public static void main(final String[] args) throws Exception {
 		final int[] keys = new int[] {
@@ -37,10 +41,12 @@ public class Example {
 		KVStoreFactory<IntHolder, IntHolder> factory = new KVStoreFactory<IntHolder, IntHolder>(
 				IntHolder.class, IntHolder.class);
 		Options opts = factory.createTreeOptionsDefault().set(KVStoreFactory.FILENAME, btreeFile);
+
 		BplusTreeFile<IntHolder, IntHolder> tree = factory.createTreeFile(opts);
 		//
 		// Open & Recovery tree if needed
 		try {
+			// 打开文件，反序列化为b+树（redoLog崩溃恢复）
 			if (tree.open()) {
 				System.out.println("open tree ok");
 			}
@@ -58,9 +64,14 @@ public class Example {
 		for (int i = 0; i < keys.length; i++) {
 			final IntHolder key = IntHolder.valueOf(keys[i]);
 			final IntHolder value = IntHolder.valueOf(i);
+
+			// 插入节点
 			tree.put(key, value);
 		}
+
+		// 持久化，dirty块写入文件
 		tree.sync();
+
 		// ============== GET
 		System.out.println("tree.get(7)=" + tree.get(IntHolder.valueOf(7)));
 		// ============== REMOVE
